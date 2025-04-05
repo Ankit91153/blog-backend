@@ -34,7 +34,8 @@ const corsOptions = {
   },
   credentials: true, // Allow cookies/auth headers
   optionsSuccessStatus: 200,
-  exposedHeaders: ["Content-Length", "X-Total-Count"],
+   allowedHeaders: "Content-Type, Authorization"
+
 };
 
 app.use(cors(corsOptions));
