@@ -21,10 +21,11 @@ connectDB();
 const app = express();
 app.use(express.json());
 
-const allowedOrigins = process.env.CORS_ORIGIN.split(",") || [];
+const allowedOrigins = process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(",") : [];
 
 const corsOptions = {
   origin: function (origin, callback) {
+    console.log("Origin:", origin); // Debugging
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
@@ -33,7 +34,7 @@ const corsOptions = {
   },
   credentials: true, // Allow cookies/auth headers
   optionsSuccessStatus: 200,
-  exposedHeaders: ["Content-Length", "X-Total-Count"], // Expose additional headers if needed
+  exposedHeaders: ["Content-Length", "X-Total-Count"],
 };
 
 app.use(cors(corsOptions));
