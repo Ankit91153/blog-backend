@@ -32,8 +32,9 @@ const corsOptions = {
       callback(new Error("Not allowed by CORS"));
     }
   },
-  optionsSuccessStatus: 200,
-   allowedHeaders: "Content-Type, Authorization"
+  // optionsSuccessStatus: 200,
+  //  allowedHeaders: "Content-Type, Authorization"
+  exposedHeaders: "*",
 
 };
 
