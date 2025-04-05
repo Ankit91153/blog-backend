@@ -19,8 +19,19 @@ connectDB();
 const app = express();
 app.use(express.json());
 
+const allowedOrigins = process.env.CORS_ORIGIN.split(",") || [];
+
 const corsOptions = {
-  exposedHeaders: "*",
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true, // Allow cookies/auth headers
+  optionsSuccessStatus: 200,
+  exposedHeaders: ["Content-Length", "X-Total-Count"], // Expose additional headers if needed
 };
 
 app.use(cors(corsOptions));
