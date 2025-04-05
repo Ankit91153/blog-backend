@@ -3,6 +3,8 @@ import dotenv from "dotenv";
 import path from "path";
 import connectDB from "./config/db.js";
 import cors from "cors";
+import { fileURLToPath } from "url";
+import { dirname } from "path";
 import {
   errorResponserHandler,
   invalidPathHandler,
@@ -46,6 +48,8 @@ app.use("/api/comments", commentRoutes);
 app.use("/api/post-categories", postCategoriesRoutes);
 
 // static assets
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 app.use("/uploads", express.static(path.join(__dirname, "/uploads")));
 
 app.use(invalidPathHandler);
