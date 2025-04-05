@@ -9,10 +9,10 @@ import {
 } from "./middleware/errorHandler.js";
 
 // Routes
-import userRoutes from "./routes/userRoutes.js";
-import postRoutes from "./routes/postRoutes.js";
-import commentRoutes from "./routes/commentRoutes.js";
-import postCategoriesRoutes from "./routes/postCategoriesRoutes.js";
+import userRoutes from "./routes/userRoutes";
+import postRoutes from "./routes/postRoutes";
+import commentRoutes from "./routes/commentRoutes";
+import postCategoriesRoutes from "./routes/postCategoriesRoutes";
 
 dotenv.config();
 connectDB();
