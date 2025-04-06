@@ -1,4 +1,6 @@
-import { verify } from "jsonwebtoken";
+import jwt from "jsonwebtoken";
+
+const { verify } = jwt;
 import User from "../models/User.js";
 
 export const authGuard = async (req, res, next) => {
