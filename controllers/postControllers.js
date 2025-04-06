@@ -144,7 +144,7 @@ const deletePost = async (req, res, next) => {
       return next(error);
     }
 
-    fileRemover(post.photo);
+    // fileRemover(post.photo);
 
     await Comment.deleteMany({ post: post._id });
 
