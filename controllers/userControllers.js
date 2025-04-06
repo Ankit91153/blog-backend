@@ -339,12 +339,12 @@ const deleteUser = async (req, res, next) => {
       _id: { $in: postIdsToDelete },
     });
 
-    postsToDelete.forEach((post) => {
-      fileRemover(post.photo);
-    });
+    // postsToDelete.forEach((post) => {
+    //   fileRemover(post.photo);
+    // });
 
     await user.remove();
-    fileRemover(user.avatar);
+    // fileRemover(user.avatar);
 
     res.status(204).json({ message: "User is deleted successfully" });
   } catch (error) {
