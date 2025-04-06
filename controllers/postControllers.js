@@ -3,6 +3,8 @@ import Post from "../models/Post.js";
 import Comment from "../models/Comment.js";
 import { fileRemover } from "../utils/fileRemover.js";
 import { v4 as uuidv4 } from "uuid";
+import { cloudinary, uploadPostImage } from "../utils/uploadCloudinaryImage.js";
+import { uploadImageToCloudinary } from "../utils/imageUploader.js";
 
 const createPost = async (req, res, next) => {
   try {
@@ -25,55 +27,109 @@ const createPost = async (req, res, next) => {
   }
 };
 
+// const updatePost = async (req, res, next) => {
+//   try {
+//     const post = await Post.findOne({ slug: req.params.slug });
+
+//     if (!post) {
+//       const error = new Error("Post aws not found");
+//       next(error);
+//       return;
+//     }
+
+//     const upload = uploadPicture.single("postPicture");
+
+//     const handleUpdatePostData = async (data) => {
+//       const { title, caption, slug, body, tags, categories } = JSON.parse(data);
+//       post.title = title || post.title;
+//       post.caption = caption || post.caption;
+//       post.slug = slug || post.slug;
+//       post.body = body || post.body;
+//       post.tags = tags || post.tags;
+//       post.categories = categories || post.categories;
+//       const updatedPost = await post.save();
+//       return res.json(updatedPost);
+//     };
+
+//     upload(req, res, async function (err) {
+//       if (err) {
+//         const error = new Error(
+//           "An unknown error occured when uploading " + err.message
+//         );
+//         next(error);
+//       } else {
+//         // every thing went well
+//         if (req.file) {
+//           let filename;
+//           filename = post.photo;
+//           if (filename) {
+//             fileRemover(filename);
+//           }
+//           post.photo = req.file.filename;
+//           handleUpdatePostData(req.body.document);
+//         } else {
+//           let filename;
+//           filename = post.photo;
+//           post.photo = "";
+//           fileRemover(filename);
+//           handleUpdatePostData(req.body.document);
+//         }
+//       }
+//     });
+//   } catch (error) {
+//     next(error);
+//   }
+// };
+
 const updatePost = async (req, res, next) => {
   try {
     const post = await Post.findOne({ slug: req.params.slug });
 
-    if (!post) {
-      const error = new Error("Post aws not found");
-      next(error);
-      return;
+    if (!post) return next(new Error("Post was not found"));
+
+    let imageUrl; // Keep existing image if no new file is uploaded
+
+    if (req.file) {
+      const postPicture = req.file;
+      console.log("Uploaded file:", postPicture);
+
+      const image = await uploadImageToCloudinary(
+        postPicture,
+        `${process.env.FOLDER_NAME}/post`,
+        1000,
+        1000
+      );
+      
+
+      console.log("Uploaded image:", image);
+
+      if (!image) {
+        return next(new Error("Error uploading file"));
+      }
+
+      imageUrl = image.secure_url; // Update with the new image URL
     }
 
-    const upload = uploadPicture.single("postPicture");
+     // ✅ Fix: Parse JSON from `req.body.document`
+     const { title, caption, slug, body, tags, categories } = JSON.parse(
+      req.body.document
+    );
 
-    const handleUpdatePostData = async (data) => {
-      const { title, caption, slug, body, tags, categories } = JSON.parse(data);
-      post.title = title || post.title;
-      post.caption = caption || post.caption;
-      post.slug = slug || post.slug;
-      post.body = body || post.body;
-      post.tags = tags || post.tags;
-      post.categories = categories || post.categories;
-      const updatedPost = await post.save();
-      return res.json(updatedPost);
-    };
+    // Parse JSON data from request body
 
-    upload(req, res, async function (err) {
-      if (err) {
-        const error = new Error(
-          "An unknown error occured when uploading " + err.message
-        );
-        next(error);
-      } else {
-        // every thing went well
-        if (req.file) {
-          let filename;
-          filename = post.photo;
-          if (filename) {
-            fileRemover(filename);
-          }
-          post.photo = req.file.filename;
-          handleUpdatePostData(req.body.document);
-        } else {
-          let filename;
-          filename = post.photo;
-          post.photo = "";
-          fileRemover(filename);
-          handleUpdatePostData(req.body.document);
-        }
-      }
-    });
+    // Update post fields
+    post.title = title || post.title;
+    post.caption = caption || post.caption; 
+    post.slug = slug || post.slug;
+    post.body = body || post.body;
+    post.tags = tags || post.tags;
+    post.categories = categories || post.categories;
+    post.photo = imageUrl || post.photo; // Assign new image URL if updated
+
+    // Save updated post
+    const updatedPost = await post.save();
+
+    res.json(updatedPost);
   } catch (error) {
     next(error);
   }

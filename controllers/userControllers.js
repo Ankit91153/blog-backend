@@ -3,6 +3,11 @@ import Comment from "../models/Comment.js";
 import Post from "../models/Post.js";
 import User from "../models/User.js";
 import { fileRemover } from "../utils/fileRemover.js";
+import { uploadImageToCloudinary } from "../utils/imageUploader.js";
+import {
+  cloudinary,
+  uploadProfilePicture,
+} from "../utils/uploadCloudinaryImage.js";
 
 const registerUser = async (req, res, next) => {
   try {
@@ -133,59 +138,150 @@ const updateProfile = async (req, res, next) => {
   }
 };
 
-const updateProfilePicture = async (req, res, next) => {
-  try {
-    const upload = uploadPicture.single("profilePicture");
+// const updateProfilePicture = async (req, res, next) => {
+//   try {
+//     const upload = uploadProfilePicture.single("profilePicture");
+//     console.log(upload);
+//     upload(req, res, async function (err) {
+//       if (err) return next(new Error("Error uploading file: " + err.message));
 
-    upload(req, res, async function (err) {
-      if (err) {
-        const error = new Error(
-          "An unknown error occured when uploading " + err.message
-        );
-        next(error);
-      } else {
-        // every thing went well
-        if (req.file) {
-          let filename;
-          let updatedUser = await User.findById(req.user._id);
-          filename = updatedUser.avatar;
-          if (filename) {
-            fileRemover(filename);
-          }
-          updatedUser.avatar = req.file.filename;
-          await updatedUser.save();
-          res.json({
-            _id: updatedUser._id,
-            avatar: updatedUser.avatar,
-            name: updatedUser.name,
-            email: updatedUser.email,
-            verified: updatedUser.verified,
-            admin: updatedUser.admin,
-            token: await updatedUser.generateJWT(),
-          });
-        } else {
-          let filename;
-          let updatedUser = await User.findById(req.user._id);
-          filename = updatedUser.avatar;
-          updatedUser.avatar = "";
-          await updatedUser.save();
-          fileRemover(filename);
-          res.json({
-            _id: updatedUser._id,
-            avatar: updatedUser.avatar,
-            name: updatedUser.name,
-            email: updatedUser.email,
-            verified: updatedUser.verified,
-            admin: updatedUser.admin,
-            token: await updatedUser.generateJWT(),
-          });
-        }
+//       const updatedUser = await User.findById(req.user._id);
+//       if (!updatedUser) return next(new Error("User not found"));
+
+//       if (req.file) {
+//         // Delete old Cloudinary image if exists
+//         if (updatedUser.avatar) {
+//           const publicId = updatedUser.avatar.split("/").pop().split(".")[0];
+//           await cloudinary.uploader.destroy(publicId);
+//         }
+
+//         // Update with new Cloudinary URL
+//         updatedUser.avatar = req.file.path;
+//       } else {
+//         // Remove old avatar if no new file uploaded
+//         if (updatedUser.avatar) {
+//           const publicId = updatedUser.avatar.split("/").pop().split(".")[0];
+//           await cloudinary.uploader.destroy(publicId);
+//         }
+//         updatedUser.avatar = "";
+//       }
+
+//       await updatedUser.save();
+
+//       res.json({
+//         _id: updatedUser._id,
+//         avatar: updatedUser.avatar,
+//         name: updatedUser.name,
+//         email: updatedUser.email,
+//         verified: updatedUser.verified,
+//         admin: updatedUser.admin,
+//         token: await updatedUser.generateJWT(),
+//       });
+//     });
+//   } catch (error) {
+//     next(error);
+//   }
+// };
+const updateProfilePicture = async (req, res, next) => {
+  console.log("req.file:", req.file);
+  try {
+    const updatedUser = await User.findById(req.user._id);
+    if (!updatedUser) return next(new Error("User not found"));
+
+    if (!req.file) {
+      // ❌ If no file is uploaded, remove the avatar
+      updatedUser.avatar = "";
+    } else {
+      // ✅ If a new file is uploaded, upload to Cloudinary
+      const profilePicture = req.file;
+      console.log("Uploaded file:", profilePicture);
+      
+      const image = await uploadImageToCloudinary(
+        profilePicture,
+        `${process.env.FOLDER_NAME}/profile`,
+        300,
+        300
+      );
+
+      console.log("Uploaded image:", image);
+
+      if (!image) {
+        return next(new Error("Error uploading file"));
       }
+
+      updatedUser.avatar = image.url; // Save new avatar
+    }
+
+    // Save changes to the database
+    await updatedUser.save();
+
+    res.json({
+      _id: updatedUser._id,
+      avatar: updatedUser.avatar,
+      name: updatedUser.name,
+      email: updatedUser.email,
+      verified: updatedUser.verified,
+      admin: updatedUser.admin,
+      token: await updatedUser.generateJWT(),
     });
   } catch (error) {
     next(error);
   }
 };
+
+// const updateProfilePicture = async (req, res, next) => {
+//   try {
+//     const upload = uploadPicture.single("profilePicture");
+
+//     upload(req, res, async function (err) {
+//       if (err) {
+//         const error = new Error(
+//           "An unknown error occured when uploading " + err.message
+//         );
+//         next(error);
+//       } else {
+//         // every thing went well
+//         if (req.file) {
+//           let filename;
+//           let updatedUser = await User.findById(req.user._id);
+//           filename = updatedUser.avatar;
+//           if (filename) {
+//             fileRemover(filename);
+//           }
+//           updatedUser.avatar = req.file.filename;
+//           await updatedUser.save();
+//           res.json({
+//             _id: updatedUser._id,
+//             avatar: updatedUser.avatar,
+//             name: updatedUser.name,
+//             email: updatedUser.email,
+//             verified: updatedUser.verified,
+//             admin: updatedUser.admin,
+//             token: await updatedUser.generateJWT(),
+//           });
+//         } else {
+//           let filename;
+//           let updatedUser = await User.findById(req.user._id);
+//           filename = updatedUser.avatar;
+//           updatedUser.avatar = "";
+//           await updatedUser.save();
+//           fileRemover(filename);
+//           res.json({
+//             _id: updatedUser._id,
+//             avatar: updatedUser.avatar,
+//             name: updatedUser.name,
+//             email: updatedUser.email,
+//             verified: updatedUser.verified,
+//             admin: updatedUser.admin,
+//             token: await updatedUser.generateJWT(),
+//           });
+//         }
+//       }
+//     });
+//   } catch (error) {
+//     next(error);
+//   }
+// };
 
 const getAllUsers = async (req, res, next) => {
   try {

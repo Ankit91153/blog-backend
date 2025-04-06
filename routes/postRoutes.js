@@ -8,11 +8,14 @@ import {
   updatePost,
 } from "../controllers/postControllers.js";
 import { authGuard, adminGuard } from "../middleware/authMiddleware.js";
+import multer from "multer";
+
+const upload = multer({ dest: "uploads/" })
 
 router.route("/").post(authGuard, adminGuard, createPost).get(getAllPosts);
 router
   .route("/:slug")
-  .put(authGuard, adminGuard, updatePost)
+  .put(authGuard, adminGuard,upload.single("postPicture"), updatePost)
   .delete(authGuard, adminGuard, deletePost)
   .get(getPost);
 
