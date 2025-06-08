@@ -44,6 +44,11 @@ app.get("/", (req, res) => {
   res.send("Server is running...");
 });
 
+// ➕ Add a ping route to keep DB/server awake
+app.get("/ping", (req, res) => {
+    res.status(200).json({ success: true, message: "Server is live!" })
+})
+
 app.use("/api/users", userRoutes);
 app.use("/api/posts", postRoutes);
 app.use("/api/comments", commentRoutes);
